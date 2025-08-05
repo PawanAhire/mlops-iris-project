@@ -1,0 +1,22 @@
+# Core ML & Data
+scikit-learn
+pandas
+numpy
+
+# MLOps & Tracking
+mlflow>=2.0.0
+
+# API & Server
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+gunicorn
+
+# Logging & Monitoring (Bonus)
+prometheus-fastapi-instrumentator
+
+# Development & Testing
+pytest
+requests
+flake8
