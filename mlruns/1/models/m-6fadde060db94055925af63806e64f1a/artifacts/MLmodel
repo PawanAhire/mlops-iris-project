@@ -1,0 +1,22 @@
+artifact_path: file:///C:/Users/Pawan/Documents/BITS Pilani Sem 3/mlops-iris-project/mlruns/1/models/m-6fadde060db94055925af63806e64f1a/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.5
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.1
+mlflow_version: 3.1.4
+model_id: m-6fadde060db94055925af63806e64f1a
+model_size_bytes: 1000
+model_uuid: m-6fadde060db94055925af63806e64f1a
+prompts: null
+run_id: 6f6e65ee8f1045ca8b8c1dfa9744204a
+utc_time_created: '2025-08-06 00:46:27.970198'
