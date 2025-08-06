@@ -30,10 +30,7 @@ jobs:
         flake8 src tests
 
     - name: Test with pytest
-      run: |
-        # You would add your pytest tests in the tests/ directory
-        # For now, we just ensure pytest runs. Replace with `pytest` when tests are added.
-        pytest
+      run: python -m pytest
 
   build-and-push-docker:
     needs: lint-and-test
