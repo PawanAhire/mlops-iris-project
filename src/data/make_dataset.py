@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pandas as pd
 from sklearn.datasets import load_iris
-from pathlib import Path
+
 
 def get_raw_data():
     """Loads the Iris dataset and saves it to a raw data file."""

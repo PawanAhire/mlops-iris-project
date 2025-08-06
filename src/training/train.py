@@ -1,10 +1,10 @@
-import pandas as pd
 import mlflow
 import mlflow.sklearn
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
 
 # Set the MLflow tracking URI. Could be a local folder or a remote server.
 mlflow.set_tracking_uri("sqlite:///mlflow.db")

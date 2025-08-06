@@ -1,9 +1,10 @@
 import logging
-import pandas as pd
+
 import mlflow
+import pandas as pd
 from fastapi import FastAPI, Request
-from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
+from pydantic import BaseModel
 
 from src.utils.logging_config import setup_logging
 
