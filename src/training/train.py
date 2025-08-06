@@ -11,6 +11,7 @@ mlflow.set_tracking_uri("sqlite:///mlflow.db")
 # Set the experiment name
 mlflow.set_experiment("Iris Classification")
 
+
 def train_models():
     """Trains, evaluates, and logs two models for the Iris dataset."""
     print("Loading data...")
@@ -18,7 +19,9 @@ def train_models():
 
     X = df.drop("target", axis=1)
     y = df["target"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
 
     # --- Model 1: Logistic Regression ---
     with mlflow.start_run(run_name="Logistic Regression"):
@@ -28,7 +31,7 @@ def train_models():
 
         y_pred = lr.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average="weighted")
 
         # Log parameters, metrics, and model
         mlflow.log_param("model_type", "LogisticRegression")
@@ -42,10 +45,10 @@ def train_models():
         print("Training Random Forest...")
         rf = RandomForestClassifier(n_estimators=100, random_state=42)
         rf.fit(X_train, y_train)
-        
+
         y_pred = rf.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average="weighted")
 
         # Log parameters, metrics, and model
         mlflow.log_param("model_type", "RandomForestClassifier")
@@ -54,6 +57,7 @@ def train_models():
         mlflow.log_metric("f1_score", f1)
         mlflow.sklearn.log_model(rf, "model")
         print(f"Random Forest - Accuracy: {accuracy:.4f}, F1 Score: {f1:.4f}")
+
 
 def register_best_model():
     """Finds the best run and registers the model."""
@@ -65,7 +69,7 @@ def register_best_model():
     runs = client.search_runs(
         experiment_ids=client.get_experiment_by_name(experiment_name).experiment_id,
         order_by=["metrics.accuracy DESC"],
-        max_results=1
+        max_results=1,
     )
 
     if not runs:
@@ -82,12 +86,11 @@ def register_best_model():
 
     # Transition the model to the "Production" stage
     client.transition_model_version_stage(
-        name=model_name,
-        version=model_version.version,
-        stage="Production"
+        name=model_name, version=model_version.version, stage="Production"
     )
     print(f"Model version {model_version.version} moved to Production.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     train_models()
     register_best_model()

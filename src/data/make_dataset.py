@@ -15,11 +15,12 @@ def get_raw_data():
     # Load dataset
     iris = load_iris()
     iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
-    iris_df['target'] = iris.target
-    
+    iris_df["target"] = iris.target
+
     # Save to CSV
     iris_df.to_csv(iris_csv_path, index=False)
     print(f"Raw data saved to {iris_csv_path}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     get_raw_data()
