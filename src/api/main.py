@@ -1,5 +1,3 @@
-import logging
-
 import mlflow
 import pandas as pd
 from fastapi import FastAPI, Request
