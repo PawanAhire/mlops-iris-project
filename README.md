@@ -1,22 +1,24 @@
-MLOps Project: Iris Classification API
-This project demonstrates a minimal but complete MLOps pipeline for building, tracking, packaging, deploying, and monitoring a machine learning model for the Iris dataset.
+# MLOps Project: Iris Classification API
 
-Course Event: "Build, Track, Package, Deploy and Monitor an ML Model using MLOps Best Practices"
+This project demonstrates a minimal but complete MLOps pipeline for **building, tracking, packaging, deploying, and monitoring** a machine learning model for the **Iris dataset**.
 
-Technologies Used
-Version Control: Git & GitHub
+**Course Event:**  
+*"Build, Track, Package, Deploy and Monitor an ML Model using MLOps Best Practices"*
 
-Experiment Tracking: MLflow
+---
 
-API Framework: FastAPI with Pydantic
+## Technologies Used
+- **Version Control:** Git & GitHub  
+- **Experiment Tracking:** MLflow  
+- **API Framework:** FastAPI with Pydantic  
+- **Containerization:** Docker & Docker Compose  
+- **CI/CD:** GitHub Actions  
+- **Logging & Monitoring:** Python logging module, Prometheus  
 
-Containerization: Docker & Docker Compose
+---
 
-CI/CD: GitHub Actions
-
-Logging & Monitoring: Python logging module, Prometheus
-
-Project Structure
+## Project Structure
+```
 .
 ├── .github/workflows/      # GitHub Actions CI/CD pipeline
 ├── data/raw/               # Raw dataset storage
@@ -28,101 +30,113 @@ Project Structure
 │   └── utils/              # Utility modules (e.g., logging)
 ├── tests/                  # Pytest tests
 ├── .dockerignore           # Files to ignore in Docker build
-├── .flake8                 # Configuration for the flake8 linter
-├── .gitignore              # Files to ignore in Git
-├── docker-compose.yml      # Docker Compose configuration for local development
+├── .flake8                 # flake8 linter configuration
+├── .gitignore              # Git ignore file
+├── docker-compose.yml      # Docker Compose config
 ├── Dockerfile              # Docker image definition
 ├── requirements.txt        # Python dependencies
 ├── README.md               # This file
-└── summary.md              # Project summary document
+└── summary.md              # Project summary
+```
 
-How to Run the Project (Recommended Method) 🚀
-This project uses Docker Compose to create a consistent and portable environment for both training and serving the model. This is the simplest and most reliable way to run it.
+---
 
-1. Prerequisites
-You must have Docker and Docker Compose installed.
+## How to Run the Project (Recommended Method)
 
-You have cloned this repository.
+This project uses **Docker Compose** to create a consistent and portable environment for both training and serving the model.
 
-2. Prepare the Initial Dataset
-This step only needs to be run once. It downloads the Iris dataset and places it in the data/raw directory.
+### 1 Prerequisites
+- Install [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
+- Clone this repository.
 
+```bash
+git clone <repo-url>
+cd <repo-directory>
+```
+
+### 2 Prepare the Initial Dataset
+```bash
 python src/data/make_dataset.py
+```
 
-3. Run the MLOps Workflow with Docker Compose
-Step A: Train the Model
-This command builds the Docker image and runs the training service. It executes the training script inside a container, ensuring that the resulting MLflow artifacts (mlruns directory) are created in a clean, Linux-native environment and saved to your local machine.
+### 3 Run the MLOps Workflow with Docker Compose
 
+#### Step A: Train the Model
+```bash
 docker-compose run --rm training
+```
 
-Step B: Run the API Server
-Once training is complete, start the API service. This command starts the FastAPI server and mounts the mlruns directory created in the previous step.
-
+#### Step B: Run the API Server
+```bash
 docker-compose up api
+```
+API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-Your API is now running and can be accessed in your browser at http://localhost:8000/docs.
-
-Step C: Stop the Services
-When you are finished, press Ctrl+C in the terminal where the API is running. To fully stop and remove the containers and network, run:
-
+#### Step C: Stop the Services
+```bash
 docker-compose down
+```
+
+---
 
 <details>
-<summary><strong>Alternative: Manual Local Run Without Docker Compose</strong></summary>
+<summary><strong> Alternative: Manual Local Run Without Docker Compose</strong></summary>
 
-This method allows you to run each component of the project manually on your local machine.
-
-Local Setup:
-
-# Create and activate a virtual environment
+**Local Setup:**
+```bash
 python -m venv .venv
-.\.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # macOS/Linux
+# Windows
+.\.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
+```
 
-Generate Raw Data:
-
+**Generate Raw Data:**
+```bash
 python src/data/make_dataset.py
+```
 
-Run Experiments and Register Model:
-In one terminal, start the MLflow UI:
-
+**Run Experiments and Register Model:**
+```bash
+# Terminal 1: MLflow UI
 mlflow ui --backend-store-uri ./mlruns
 
-In a second terminal, run the training script:
-
+# Terminal 2: Training
 python src/training/train.py
+```
+View MLflow UI: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-Open http://127.0.0.1:5000 to view experiments.
-
-Run the API Locally:
-
-uvicorn src.api.main:app --host 0.0.0.0 --port 8000
-
-Access the API docs at http://localhost:8000/docs.
+**Run the API Locally:**
+```bash
+uvicorn src/api/main:app --host 0.0.0.0 --port 8000
+```
+Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 </details>
 
-CI/CD Pipeline
-The pipeline is defined in .github/workflows/ci-cd.yml and performs the following on push to main:
+---
 
-Lint & Test: Runs flake8 and pytest to ensure code quality.
+## CI/CD Pipeline
+**File:** `.github/workflows/ci-cd.yml`
 
-Build & Push: Builds the Docker image and pushes it to Docker Hub.
+Pipeline steps:
+1. **Lint & Test:** Runs `flake8` and `pytest`.
+2. **Build & Push:** Builds the Docker image and pushes to Docker Hub.
 
-Secrets Required in GitHub:
+**Secrets Required in GitHub:**
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
 
-DOCKERHUB_USERNAME: Your Docker Hub username.
+---
 
-DOCKERHUB_TOKEN: A Docker Hub access token with Read, Write, Delete permissions.
+## API Endpoints
+| Method | Endpoint     | Description                     |
+|--------|--------------|---------------------------------|
+| GET    | `/`          | Health check                   |
+| GET    | `/docs`      | Swagger UI                      |
+| POST   | `/predict`   | Make a prediction               |
+| GET    | `/metrics`   | Prometheus metrics              |
 
-API Endpoints
-GET /: Health check.
-
-GET /docs: Interactive API documentation (Swagger UI).
-
-POST /predict: Makes a prediction.
-
-GET /metrics: Exposes Prometheus metrics.
+---
