@@ -134,7 +134,7 @@ Pipeline steps:
 ## API Endpoints
 | Method | Endpoint     | Description                     |
 |--------|--------------|---------------------------------|
-| GET    | `/`          | Health check                   |
+| GET    | `/`          | Health check                    |
 | GET    | `/docs`      | Swagger UI                      |
 | POST   | `/predict`   | Make a prediction               |
 | GET    | `/metrics`   | Prometheus metrics              |
