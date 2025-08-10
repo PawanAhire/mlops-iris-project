@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 
-from src.api.main import (  # Import PredictionOut for the assertion
-    PredictionOut, app)
+from src.api.main import PredictionOut, app  # Import PredictionOut for the assertion
 
 client = TestClient(app)
 

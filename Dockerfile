@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -21,4 +21,4 @@ COPY . /app
 # -w 4: Number of worker processes
 # -k uvicorn.workers.UvicornWorker: The worker class for ASGI applications (FastAPI)
 # -b 0.0.0.0:8000: Bind to all network interfaces on port 8000
-CMD ["gunicorn", "-w", "2", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "src.api.main:app"]
+CMD ["gunicorn", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "src.api.main:app"]

@@ -1,0 +1,8 @@
+aliases:
+  production: '1'
+creation_timestamp: 1754821320194
+deployment_job_id: null
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1754821321163
+name: IrisClassifier

@@ -1,50 +1,67 @@
+from contextlib import asynccontextmanager
+
 import mlflow
 import pandas as pd
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 
 from src.utils.logging_config import setup_logging
 
-# --- 1. SETUP ---
+# --- Constants and Setup ---
+MODEL_NAME = "IrisClassifier"
+MODEL_ALIAS = "production"
+
 # Initialize logging
 logger = setup_logging()
 
-# Initialize FastAPI app
+# Global variable to hold the model
+model = None
+
+
+# --- Lifespan Manager for Model Loading ---
+# This is the modern way to handle startup/shutdown events in FastAPI
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Asynchronous context manager to handle application lifespan events.
+    Loads the ML model on startup and cleans up on shutdown.
+    """
+    global model
+    logger.info("Application startup: Loading ML model...")
+    try:
+        # Use the portable relative path for the tracking URI
+        mlflow.set_tracking_uri("./mlruns")
+
+        # Load model using the alias (e.g., "production")
+        model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
+        model = mlflow.pyfunc.load_model(model_uri)
+        logger.info(
+            f"Successfully loaded model '{MODEL_NAME}' with alias '{MODEL_ALIAS}'"
+        )
+    except Exception as e:
+        logger.error(f"Failed to load model on startup: {e}")
+        model = None
+
+    yield  # The application runs while the lifespan context is active
+
+    logger.info("Application shutdown: Cleaning up resources.")
+    # You can add cleanup code here if needed
+
+
+# --- FastAPI App Initialization ---
 app = FastAPI(
     title="Iris Model API",
     description="API for serving the Iris classification model.",
     version="0.1.0",
+    lifespan=lifespan,  # Use the lifespan manager
 )
 
-# Instrument the app with Prometheus metrics (for /metrics endpoint)
+# Instrument with Prometheus metrics
 Instrumentator().instrument(app).expose(app)
 
-# --- 2. MODEL LOADING ---
-# Define model name and stage
-MODEL_NAME = "IrisClassifier"
-MODEL_STAGE = "Production"
-model = None
 
-
-@app.on_event("startup")
-def load_model():
-    """Load the model from MLflow Model Registry at startup."""
-    global model
-    try:
-        mlflow.set_tracking_uri("sqlite:///mlflow.db")
-        model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
-        model = mlflow.pyfunc.load_model(model_uri)
-        logger.info(
-            f"Successfully loaded model '{MODEL_NAME}' version from stage '{MODEL_STAGE}'"
-        )
-    except Exception as e:
-        logger.error(f"Failed to load model: {e}")
-        model = None  # Ensure model is None if loading fails
-
-
-# --- 3. API DATA MODELS (Pydantic Schemas) ---
-# This provides automatic data validation and documentation
+# --- API Data Models (Pydantic Schemas) ---
 class IrisInput(BaseModel):
     sepal_length_cm: float
     sepal_width_cm: float
@@ -52,7 +69,8 @@ class IrisInput(BaseModel):
     petal_width_cm: float
 
     class Config:
-        schema_extra = {
+        # Updated from 'schema_extra' to 'json_schema_extra' to fix warning
+        json_schema_extra = {
             "example": {
                 "sepal_length_cm": 5.1,
                 "sepal_width_cm": 3.5,
@@ -67,10 +85,10 @@ class PredictionOut(BaseModel):
     class_name: str
 
 
-# --- 4. API ENDPOINTS ---
+# --- API Endpoints ---
 @app.get("/", tags=["General"])
 def read_root():
-    """Root endpoint to check if the API is running."""
+    """Root endpoint to check API status."""
     return {"status": "Iris model API is running."}
 
 
@@ -82,43 +100,47 @@ async def predict(request: Request, data: IrisInput):
     - 1: Versicolor
     - 2: Virginica
     """
-    if model is None:
-        logger.error("Model is not loaded. Cannot make prediction.")
-        return {"error": "Model not available"}
-
-    # Log incoming request
     client_host = request.client.host
     logger.info(f"Received prediction request from {client_host}: {data.dict()}")
 
-    # Convert input to DataFrame in the correct format
-    # The feature names must match what the model was trained on
-    feature_names = [
-        "sepal length (cm)",
-        "sepal width (cm)",
-        "petal length (cm)",
-        "petal width (cm)",
-    ]
-    input_data = pd.DataFrame(
-        [
+    # This is the new, robust error handling
+    if model is None:
+        logger.error("Model is not loaded. Returning 503 Service Unavailable.")
+        raise HTTPException(
+            status_code=503, detail="Model is not available. Please try again later."
+        )
+
+    try:
+        # Column names must match the model's training columns exactly
+        feature_names = [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)",
+        ]
+        input_data = pd.DataFrame(
             [
-                data.sepal_length_cm,
-                data.sepal_width_cm,
-                data.petal_length_cm,
-                data.petal_width_cm,
-            ]
-        ],
-        columns=feature_names,
-    )
+                [
+                    data.sepal_length_cm,
+                    data.sepal_width_cm,
+                    data.petal_length_cm,
+                    data.petal_width_cm,
+                ]
+            ],
+            columns=feature_names,
+        )
 
-    # Make prediction
-    prediction = model.predict(input_data)
-    predicted_class = int(prediction[0])
+        prediction = model.predict(input_data)
+        predicted_class = int(prediction[0])
 
-    # Map prediction index to class name
-    class_map = {0: "Setosa", 1: "Versicolor", 2: "Virginica"}
-    predicted_class_name = class_map.get(predicted_class, "Unknown")
+        class_map = {0: "Setosa", 1: "Versicolor", 2: "Virginica"}
+        predicted_class_name = class_map.get(predicted_class, "Unknown")
 
-    # Log the output
-    logger.info(f"Prediction result: {predicted_class} ({predicted_class_name})")
+        logger.info(f"Prediction result: {predicted_class} ({predicted_class_name})")
+        return PredictionOut(
+            prediction=predicted_class, class_name=predicted_class_name
+        )
 
-    return PredictionOut(prediction=predicted_class, class_name=predicted_class_name)
+    except Exception as e:
+        logger.error(f"Error during prediction: {e}")
+        raise HTTPException(status_code=500, detail="Failed to make a prediction.")

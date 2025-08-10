@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  training:
+    build: .
+    volumes:
+      # Mount the results folder to save artifacts
+      - ./mlruns:/app/mlruns
+      # ALSO mount the data folder so the script can read the CSV
+      - ./data:/app/data
+    command: python src/training/train.py
+
+  api:
+    build: .
+    volumes:
+      # Mount the results folder so the API can load the model
+      - ./mlruns:/app/mlruns
+      # ALSO mount the data folder (good practice in case the API ever needs it)
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
